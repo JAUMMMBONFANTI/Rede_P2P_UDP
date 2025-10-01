@@ -10,20 +10,52 @@ import java.nio.file.Paths;
 import java.util.Set;
 import core.NodeInfo;
 
+/**
+ * Orquestra a lógica de sincronização de arquivos. Esta classe atua como o
+ * cérebro das operações de P2P, sendo responsável por duas funções principais:
+ * 1. **Propagação:** Quando o FolderMonitor detecta uma alteração local, esta
+ * classe é acionada para construir e enviar a mensagem (CREATE ou DELETE)
+ * para todos os outros peers da rede.
+ * 2. **Persistência:** Quando o NetworkListener recebe uma mensagem da rede,
+ * esta classe é responsável por aplicar a alteração no sistema de arquivos
+ * local (salvando ou deletando um arquivo).
+ */
 public class FileSyncManager {
     private final String syncDirectory;
     private final NodeInfo currentNode;
     private FolderMonitor folderMonitor;
 
+    /**
+     * Construtor do gerenciador de sincronização.
+     *
+     * @param baseDir O caminho do diretório que será sincronizado.
+     * @param node    O objeto de configuração contendo as informações do nó atual.
+     */
     public FileSyncManager(String baseDir, NodeInfo node) {
         this.syncDirectory = baseDir;
         this.currentNode = node;
     }
 
+    /**
+     * Estabelece a referência ao FolderMonitor. Esta "injeção de dependência" é
+     * crucial para resolver o problema de looping, permitindo que o FileSyncManager
+     * notifique o monitor sobre alterações remotas para que ele não as trate como
+     * alterações locais.
+     *
+     * @param monitor A instância ativa do FolderMonitor.
+     */
     public void setFolderMonitor(FolderMonitor monitor) {
         this.folderMonitor = monitor;
     }
 
+    /**
+     * Dispara a propagação da criação de um arquivo. Este método é chamado
+     * pelo FolderMonitor quando um novo arquivo (ou uma modificação) é detectado.
+     * Ele lê o conteúdo do arquivo, monta o pacote de dados no formato "CREATE|nome|conteúdo"
+     * e o envia para a rede.
+     *
+     * @param filePath O caminho completo do arquivo local que foi criado ou modificado.
+     */
     public void broadcastFileCreation(String filePath) {
         System.out.println("Iniciando transmissão do arquivo: " + filePath);
         try {
@@ -44,12 +76,26 @@ public class FileSyncManager {
         }
     }
 
+    /**
+     * Dispara a propagação da exclusão de um arquivo. Este método é chamado
+     * pelo FolderMonitor quando detecta que um arquivo foi removido do diretório.
+     * Ele monta a mensagem no formato "DELETE|nome" e a envia para a rede.
+     *
+     * @param fileName O nome do arquivo que foi deletado localmente.
+     */
     public void broadcastFileDeletion(String fileName) {
         System.out.println("Propagando exclusão do arquivo: " + fileName);
         String packetContent = "DELETE|" + fileName;
         propagateToNetwork(packetContent.getBytes());
     }
 
+    /**
+     * Método genérico para enviar um pacote de dados UDP para todos os nós
+     * listados no arquivo de configuração. Ele itera sobre a lista de peers,
+     * resolve o endereço de cada um e envia o pacote de dados.
+     *
+     * @param data O payload (array de bytes) a ser enviado no DatagramPacket.
+     */
     private void propagateToNetwork(byte[] data) {
         Set<String> nodes = currentNode.getNetworkNodes();
         for (String nodeAddr : nodes) {
@@ -73,6 +119,15 @@ public class FileSyncManager {
         }
     }
 
+    /**
+     * Persiste (salva em disco) um arquivo recebido de outro nó da rede.
+     * Este método é chamado pelo NetworkListener ao receber um comando "CREATE".
+     * Após salvar, ele notifica o FolderMonitor para atualizar seu mapa interno
+     * de arquivos, evitando que a alteração seja reenviada para a rede.
+     *
+     * @param fileName O nome do arquivo a ser criado no diretório local.
+     * @param content  O conteúdo binário do arquivo a ser salvo.
+     */
     public void persistReceivedFile(String fileName, byte[] content) {
         try {
             Path destinationPath = Paths.get(syncDirectory, fileName);
@@ -88,6 +143,13 @@ public class FileSyncManager {
         }
     }
 
+    /**
+     * Remove um arquivo do disco local. Este método é chamado pelo
+     * NetworkListener ao receber um comando "DELETE". Após apagar, ele notifica o
+     * FolderMonitor para que o arquivo seja removido do seu mapa interno.
+     *
+     * @param fileName O nome do arquivo a ser deletado no diretório local.
+     */
     public void eraseReceivedFile(String fileName) {
         try {
             Path targetPath = Paths.get(syncDirectory, fileName);

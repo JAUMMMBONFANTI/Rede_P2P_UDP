@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Sistema de Sincronização de Arquivos P2P em Java
 
 ## 🎯 Problema Principal Abordado
@@ -43,7 +44,7 @@ Abra um **novo terminal** para executar os comandos abaixo.
 
 * **Para criar um ficheiro:**
     ```bash
-    docker exec -it peer1 sh -c "echo 'teste via docker' > /app/tmp/peer1/teste_docker.txt"
+    docker exec -it peer1 sh -c "echo 'Teste via Docker' > /app/tmp/peer1/teste_docker.txt"
     ```
 
 * **Para apagar o ficheiro:**
@@ -92,15 +93,18 @@ Use um **quarto terminal** para manipular os ficheiros.
 
 * **Para criar um ficheiro:**
     ```bash
-    echo "teste local" > tmp/peer1/teste.txt
+    echo "Teste Local" > tmp/peer1/teste_local.txt
     ```
 
 * **Para apagar um ficheiro:**
     * No Windows:
         ```cmd
-        del tmp\peer1\teste.txt
+        del tmp\peer1\teste_local.txt
         ```
     * No Linux ou macOS:
         ```bash
-        rm tmp/peer1/teste.txt
+        rm tmp/peer1/teste_local.txt
         ```
+=======
+# Rede_P2P_UDP
+>>>>>>> d49a27a445dd18c3604507d3ce48b0d947c018b0
