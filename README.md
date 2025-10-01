@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Sistema de Sincronização de Arquivos P2P em Java
 
 ## 🎯 Problema Principal Abordado
@@ -105,6 +104,3 @@ Use um **quarto terminal** para manipular os ficheiros.
         ```bash
         rm tmp/peer1/teste_local.txt
         ```
-=======
-# Rede_P2P_UDP
->>>>>>> d49a27a445dd18c3604507d3ce48b0d947c018b0
